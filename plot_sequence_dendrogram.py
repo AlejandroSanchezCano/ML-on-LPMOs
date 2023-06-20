@@ -1,16 +1,19 @@
 import os
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from tqdm import tqdm
-from variables import FASTA, PLOTS
 from Bio import Align
 from parse_structures import AlphaFoldStructure
+from variables import FASTA, PLOTS, SEQUENCE_CLUSTERING, CAZY_EXPANDED
 
+print('started')
 
 # List all sequences
 with open(f'{FASTA}/His1.fasta', 'r') as file:
     sequences = file.read().split('\n\n')[:-1]
     sequences = [fasta.split('\n')[1] for fasta in sequences]
+    ids = [fasta[1:].split('\n')[0] for fasta in sequences]
 
 # Configure pairwise alignemnt
 aligner = Align.PairwiseAligner()
@@ -28,7 +31,20 @@ for i in tqdm(range(n_seqs)):
 
 # Triangular matrix -> full matrix
 X = matrix + matrix.T - np.diag(np.diag(matrix))
+np.save(f'{SEQUENCE_CLUSTERING}/his1_matrix', X)
+
+# Assign color to family
+df = pd.read_pickle(f'{CAZY_EXPANDED}/AA_filtered')
+families = ['AA0', 'AA9', 'AA10', 'AA11', 'AA13', 'AA14', 'AA15', 'AA16', 'AA17']
+families_colors = dict(zip(families, sns.color_palette()))
+joined_df = pd.merge(
+    left = df,
+    right = pd.DataFrame({'UniProt' : ids}),
+    on = 'UniProt'
+).drop_duplicates('UniProt')
+
+colors = joined_df['Family'].map(families_colors).to_numpy()
 
 # Plot
-heatmap = sns.clustermap(X)
+heatmap = sns.clustermap(X, row_cluster = False, column_colors = colors)
 heatmap.savefig(f'{PLOTS}/sequence_heatmap.png', transparent=True)
