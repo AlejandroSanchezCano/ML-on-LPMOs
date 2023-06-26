@@ -5,7 +5,7 @@ import seaborn as sns
 from tqdm import tqdm
 from Bio import Align
 from parse_structures import AlphaFoldStructure
-from variables import FASTA, PLOTS, SEQUENCE_CLUSTERING, CAZY_EXPANDED
+from variables import FASTA, SEQUENCE_CLUSTERING
 
 # List all sequences
 with open(f'{FASTA}/His1.fasta', 'r') as file:
