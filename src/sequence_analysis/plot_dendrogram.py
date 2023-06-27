@@ -16,7 +16,6 @@ with open(f'{FASTA}/His1.fasta', 'r') as file:
 with open(f'{CAZY_DATA}/uniprot_family.pkl', 'rb') as dic:
     dic = pickle.load(dic)
 
-
 # Assign color to each family
 families = ['AA0', 'AA9', 'AA10', 'AA11', 'AA13', 'AA14', 'AA15', 'AA16', 'AA17']
 families_colors = dict(zip(families, sns.color_palette()))
