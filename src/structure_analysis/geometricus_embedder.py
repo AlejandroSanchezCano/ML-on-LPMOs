@@ -3,7 +3,7 @@ import pickle
 import argparse
 import numpy as np
 import geometricus as gm
-from variables import CAZY_DATA, STRUCTURE_CLUSTERING
+from variables import STRUCTURE_CLUSTERING
 
 # Argument handling
 parser = argparse.ArgumentParser(
@@ -30,18 +30,26 @@ structures_folder = args.proteins
 resolution = args.resolution
 n_threads = args.threads
 
+# Input proteins
+proteins = [structure for structure in os.listdir(structures_folder)]
+
 # Run Geometricus
-invariants, errors = gm.get_invariants_for_structures(
+invariants, _ = gm.get_invariants_for_structures(
     structures_folder, 
-    n_threads = n_threads
+    n_threads = 4,
+    split_infos = [
+        gm.SplitInfo(gm.SplitType.KMER, 8), 
+        gm.SplitInfo(gm.SplitType.RADIUS, 5)
+        ],
+    moment_types = ["O_3", "O_4", "O_5", "F"]
     )
-model = gm.ShapemerLearn.load()
+
 shapemer_class = gm.Geometricus.from_invariants(
     invariants, 
-    model = model, 
-    protein_keys = [structure for structure in os.listdir(structures_folder)],
+    protein_keys = proteins, 
     resolution = resolution
     )
+
 shapemer_count_matrix = shapemer_class.get_count_matrix()
 
 # Normalizationfor protein length
