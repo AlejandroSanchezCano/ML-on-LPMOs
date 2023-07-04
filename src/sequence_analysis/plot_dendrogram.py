@@ -5,10 +5,10 @@ import seaborn as sns
 from variables import SEQUENCE_CLUSTERING, CAZY_DATA, FASTA, PLOTS
 
 # Import matrix
-matrix = np.load(f'{SEQUENCE_CLUSTERING}/his1_matrix.npy')
+matrix = np.load(f'{SEQUENCE_CLUSTERING}/core_matrix.npy')
 
 # Get AlphaFold IDs 
-with open(f'{FASTA}/His1.fasta', 'r') as file:
+with open(f'{FASTA}/core.fasta', 'r') as file:
     sequences = file.read().split('\n\n')[:-1]
     ids = [fasta[1:].split('\n')[0] for fasta in sequences]
 
@@ -32,7 +32,7 @@ colors = [family_color[dic[id]] for id in ids]
 
 # Plot
 heatmap = sns.clustermap(matrix, col_colors = colors, row_colors = colors)
-heatmap.savefig(f'{PLOTS}/sequence_heatmap.png', transparent=True)
+heatmap.savefig(f'{PLOTS}/core_sequence_heatmap.png', transparent=True)
 
 # Average hierarchical clustering
 from scipy.cluster import hierarchy
@@ -65,11 +65,11 @@ def get_newick(node, parent_dist, leaf_names, newick='') -> str:
 tree = hierarchy.to_tree(Z, False)
 newick = get_newick(tree, tree.dist, leaf_names = ids)
 print(newick)
-with open(f'{SEQUENCE_CLUSTERING}/his1_tree.txt', 'w') as tree_file:
+with open(f'{SEQUENCE_CLUSTERING}/core_tree.txt', 'w') as tree_file:
     tree_file.write(newick)
 
 #  Write annotation file
-with open(f'{SEQUENCE_CLUSTERING}/his1_annotations.txt', 'w') as annotations_file:
+with open(f'{SEQUENCE_CLUSTERING}/core_annotations.txt', 'w') as annotations_file:
     settings = '''
 DATASET_COLORSTRIP
 #lines starting with a hash are comments and ignored during parsing
