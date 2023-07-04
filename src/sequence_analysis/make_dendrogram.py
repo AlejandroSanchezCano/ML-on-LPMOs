@@ -1,14 +1,10 @@
-import os
 import numpy as np
-import pandas as pd
-import seaborn as sns
 from tqdm import tqdm
 from Bio import Align
-from parse_structures import AlphaFoldStructure
 from variables import FASTA, SEQUENCE_CLUSTERING
 
 # List all sequences
-with open(f'{FASTA}/His1.fasta', 'r') as file:
+with open(f'{FASTA}/core.fasta', 'r') as file:
     sequences = file.read().split('\n\n')[:-1]
     sequences = [fasta.split('\n')[1] for fasta in sequences]
     ids = [fasta[1:].split('\n')[0] for fasta in sequences]
@@ -29,5 +25,4 @@ for i in tqdm(range(n_seqs)):
 
 # Triangular matrix -> full matrix
 X = matrix + matrix.T - np.diag(np.diag(matrix))
-np.save(f'{SEQUENCE_CLUSTERING}/his1_matrix', X)
-
+np.save(f'{SEQUENCE_CLUSTERING}/core_matrix', X)
