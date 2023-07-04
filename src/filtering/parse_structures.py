@@ -110,62 +110,65 @@ class AlphaFoldStructure():
         
         # Open .pdb file
         with open(self.path, 'r') as file:
-            for line in file:
+            lines = file.readlines()
+            
+        # Read lines
+        for line in lines:
                 
-                # Get UniProt ID
-                if line.startswith('TITLE'):
-                    self.uniprot = line.split()[-1][1:-1]
-                    
-                # Get sequence
-                if line.startswith('SEQRES'):
-                    peptide_3 = line.split()[4:]
-                    peptide_1 = ''.join(map(
-                        lambda x: AlphaFoldStructure._genetic_code[x]
-                        , peptide_3
-                        ))
-                    self.full_seq += peptide_1
+            # Get UniProt ID
+            if line.startswith('TITLE'):
+                self.uniprot = line.split()[-1][1:-1]
                 
-                # Get pLDDT score, position, coordinates and coordinates_per_residue
-                if line.startswith('ATOM'):
-                    # Regex coordinates and pLDDT
-                    floats = re.findall(r'-?[0-9]+\.[0-9]+', line)
-                    *coordinates, _, pLDDT = list(map(float, floats))
-                    self.coordinates.append(coordinates)
-                    coordinates_per_current.append(coordinates)
-                    # Regex position
-                    current_position = int(re.search(r' A *([0-9]+)', line).group(1))
-                    # Regex aminoacid
-                    aminoacid = re.search(r' ([A-Z]{3}) ', line).group(1)
-                    # Per residue
-                    if start_atom_section:
-                        # Update position flags
-                        old_position = current_position
-                        start_atom_section = False
-                        # Update attributes that don't change within a residue 
-                        self.positions.append(current_position)
-                        self.pLDDT.append(pLDDT)
-                        self.seq += AlphaFoldStructure._genetic_code[aminoacid]
+            # Get sequence
+            if line.startswith('SEQRES'):
+                peptide_3 = line.split()[4:]
+                peptide_1 = ''.join(map(
+                    lambda x: AlphaFoldStructure._genetic_code[x]
+                    , peptide_3
+                    ))
+                self.full_seq += peptide_1
+            
+            # Get pLDDT score, position, coordinates and coordinates_per_residue
+            if line.startswith('ATOM'):
+                # Regex coordinates and pLDDT
+                floats = re.findall(r'-?[0-9]+\.[0-9]+', line)
+                *coordinates, _, pLDDT = list(map(float, floats))
+                self.coordinates.append(coordinates)
+                coordinates_per_current.append(coordinates)
+                # Regex position
+                current_position = int(re.search(r' A *([0-9]+)', line).group(1))
+                # Regex aminoacid
+                aminoacid = re.search(r' ([A-Z]{3}) ', line).group(1)
+                # Per residue
+                if start_atom_section:
+                    # Update position flags
+                    old_position = current_position
+                    start_atom_section = False
+                    # Update attributes that don't change within a residue 
+                    self.positions.append(current_position)
+                    self.pLDDT.append(pLDDT)
+                    self.seq += AlphaFoldStructure._genetic_code[aminoacid]
 
-                    elif current_position != old_position:
-                        # Update position flags
-                        old_position = current_position
-                        # Update attributes that don't change within a residue 
-                        self.positions.append(current_position)
-                        self.pLDDT.append(pLDDT)
-                        self.seq += AlphaFoldStructure._genetic_code[aminoacid]
-                        # Update that change within a residue 
-                        self.coordinates_per_residue.append(np.mean(
-                                coordinates_per_current[:-1],
-                                axis = 0
-                                ))
-                        coordinates_per_current = [coordinates_per_current[-1]]
-                
-                # Add coordinates_per_current of final aminoacid
-                if line.startswith('TER'):
+                elif current_position != old_position:
+                    # Update position flags
+                    old_position = current_position
+                    # Update attributes that don't change within a residue 
+                    self.positions.append(current_position)
+                    self.pLDDT.append(pLDDT)
+                    self.seq += AlphaFoldStructure._genetic_code[aminoacid]
+                    # Update that change within a residue 
                     self.coordinates_per_residue.append(np.mean(
-                            coordinates_per_current,
+                            coordinates_per_current[:-1],
                             axis = 0
                             ))
+                    coordinates_per_current = [coordinates_per_current[-1]]
+            
+            # Add coordinates_per_current of final aminoacid
+            if line.startswith('TER'):
+                self.coordinates_per_residue.append(np.mean(
+                        coordinates_per_current,
+                        axis = 0
+                        ))
                         
         # Convert to numpy arrays
         self.positions = np.array(self.positions)
@@ -238,7 +241,7 @@ class AlphaFoldStructure():
             Sequence in fasta format.
 
         '''
-        return f'>{self.uniprot}\n{self.seq}\n'
+        return f'>{self.uniprot}\n{self.seq}\n\n'
     
     def neighbours(self,
                    center: tuple[str, int] = ('H', 0),
