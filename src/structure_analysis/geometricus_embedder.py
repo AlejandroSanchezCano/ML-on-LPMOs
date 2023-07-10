@@ -82,7 +82,7 @@ shapemer_class = gm.Geometricus.from_invariants(
     protein_keys = proteins, 
     resolution = resolution
     )
-print(shapemer_class.protein_keys)
+
 shapemer_count_matrix = shapemer_class.get_count_matrix()
 
 # Normalizationfor protein length
@@ -99,7 +99,17 @@ umap = UMAP.UMAP(metric = "cosine").fit_transform(normalized_matrix)
 # PCA
 pca = PCA().fit_transform(normalized_matrix)
 
-#TODO Scree plot
+# PCA scree plot
+PC_values = np.arange(pca.n_components_) + 1
+PC_explained_variance_ratio = pca.explained_variance_ratio_
+
+#PLOT FOR NOW BUT THIS WILL BE REMOVED SINCE IT WILL BE IN THE PLOTLY   
+fig = plt.plot(PC_values, PC_explained_variance_ratio, 'ro-', linewidth=2)
+plt.title('Scree Plot')
+plt.xlabel('Principal Component')
+plt.ylabel('Proportion of Variance Explained')
+plt.show()
+
 
 # Add family
 with open(f'{CAZY_DATA}/uniprot_family.pkl', 'rb') as dic:
@@ -117,10 +127,14 @@ pca['Family'] = families
 umap = umap[umap['Family'] != 'AA0']
 pca = pca[pca['Family'] != 'AA0']
 
+##########ADDITION
+import seaborn as sns
+
+
+
+'''
 # One Hot Encode families into colors
 dummies = pd.get_dummies(umap['Family'])
-
-print(dummies)
 
 # Translate family to color
 family_color = {
@@ -285,3 +299,4 @@ fig.data[0].on_selection(selection_fn)
 fig.data[1].on_selection(selection_fn)
 
 fig
+'''
