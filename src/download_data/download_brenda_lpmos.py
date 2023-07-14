@@ -2,7 +2,8 @@
 BRENDA parser
 
 Parses BRENDA information related to LPMOs, compare it to the existent LPMOs in
-the information retrieved from CAZy and add the missing parts.
+the information retrieved from CAZy and add the missing parts. It also 
+concatenates all the CAZy data frames in a single object.
 
 Functions
 ---------
@@ -10,7 +11,7 @@ LPMOs_from_BRENDA
 LPMOs_from_CAZy
 BRENDA_vs_CAZy
 modify_df
-
+main
 '''
 
 import requests
@@ -18,7 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 from bioservices import UniProt
-from variables import CAZY_EXPANDED
+from ..config.config_parser import config
 
 
 def LPMOs_from_BRENDA() -> dict:
@@ -88,7 +89,7 @@ def LPMOs_from_CAZY() -> pd.DataFrame:
     
     # Record individual data frames
     for df_name in dfs:
-        df = pd.read_pickle(f'{CAZY_EXPANDED}/{df_name}')
+        df = pd.read_pickle(f"{config['CAZy_expanded']}/{df_name}")
         dfs[df_name] = df
 
     # Create supreme data frame
@@ -187,7 +188,7 @@ def modify_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def main():
-    '''Progress flow.'''
+    '''Program flow.'''
     
     # Parse LPMO BRENDA
     brenda_lpmos = LPMOs_from_BRENDA()
@@ -202,7 +203,7 @@ def main():
     CAZy_plus_BRENDA = modify_df(cazy_lpmos)
     
     # Store
-    CAZy_plus_BRENDA.to_pickle(f'{CAZY_EXPANDED}/AA_supreme')
+    CAZy_plus_BRENDA.to_pickle(f"{config['CAZy_expanded']}/all.pkl")
 
 if __name__ == '__main__':
     main()
