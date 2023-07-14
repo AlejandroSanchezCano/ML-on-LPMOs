@@ -1,0 +1,10 @@
+cd lustre/ML-on-LPMOs
+
+# Download data
+python -m src.download_data.download_cazy_lpmos
+python -m src.download_data.download_brenda_lpmos
+python -m src.download_data.labels
+python -m src.download_data.uniprot_family
+python -m src.download_data.download_af_lpmos
+
+# Filtering
