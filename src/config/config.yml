@@ -12,3 +12,20 @@
   plots: '/home/sanch046/lustre/ML-on-LPMOs/docs/plots'
 
   AF_all: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_all'
+  AF_labels: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_labels'
+  AF_labels_core: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_labels_core'
+  AF_his1: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_his1'
+  SignalP: '/home/sanch046/lustre/ML-on-LPMOs/data/SignalP'
+  InterPro: '/home/sanch046/lustre/ML-on-LPMOs/data/InterPro'
+  FASTA: '/home/sanch046/lustre/ML-on-LPMOs/data/FASTA'
+  
+  family2color:
+    AA0: '#e377c2'
+    AA9: '#1f77b4'
+    AA10: '#ff7f0e'
+    AA11: '#2ca02c'
+    AA13: '#d62728'
+    AA14: '#9467bd'
+    AA15: '#8c564b'
+    AA16: '#e377c2'
+    AA17: '#bcbd22'
