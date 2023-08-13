@@ -27,6 +27,7 @@ def download_af_files(df: pd.DataFrame) -> None:
            UniProt ID, the response received results in a text file much 
            shorter than a regular .pdb file, so all files < 300 bytes are 
            removed.
+    It takes 12 minutes for 4574 entries
            
     Parameters
     ----------
@@ -54,6 +55,16 @@ def download_af_files(df: pd.DataFrame) -> None:
         size = os.path.getsize(f"{config['AF_all']}/{file}")
         if size < 300:
             os.remove(f"{config['AF_all']}/{file}")
+    
+    # New column -> True (structure), False (no structure), None (not applicable)
+    files = set([file.replace('.pdb', '')\
+                 for file in os.listdir(config['AF_all'])])
+    exists_af_structure = lambda uniprot : None if not uniprot else\
+        True if uniprot in files else False
+    df['AlphaFold'] = df['UniProt'].apply(exists_af_structure)
+
+    # Store database
+    df.to_pickle(f'{config["CAZy_expanded"]}/all.pkl')
 
 def main():
     '''Program flow.'''
