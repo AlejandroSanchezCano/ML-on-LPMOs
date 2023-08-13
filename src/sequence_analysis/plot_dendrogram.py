@@ -1,124 +1,218 @@
+'''
+Plot dendrogram
+
+Takes a FASTA file containing LPMO entries. Generates the tree file in newick 
+format. Additionally, generates the colostrip and binary annotation files to be 
+plotted in iTOL.
+
+Functions
+---------
+handle_arguments
+get_newick
+make_tree
+make_colorstrip
+to_binary
+make_binary
+'''
+
 import pickle
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from variables import SEQUENCE_CLUSTERING, CAZY_DATA, FASTA, PLOTS
-
-# Import matrix
-matrix = np.load(f'{SEQUENCE_CLUSTERING}/his1_matrix.npy')
-
-# Get AlphaFold IDs 
-with open(f'{FASTA}/His1.fasta', 'r') as file:
-    sequences = file.read().split('\n\n')[:-1]
-    ids = [fasta[1:].split('\n')[0] for fasta in sequences]
-
-# AlphaFold IDs -> corresponding families
-with open(f'{CAZY_DATA}/uniprot_family.pkl', 'rb') as dic:
-    dic = pickle.load(dic)
-
-# Assign color to each family
-family_color = {
-    'AA0' : '#e377c2',
-    'AA9' : '#1f77b4',
-    'AA10' : '#ff7f0e',
-    'AA11' : '#2ca02c',
-    'AA13' : '#d62728',
-    'AA14' : '#9467bd',
-    'AA15' : '#8c564b',
-    'AA16' : '#e377c2',
-    'AA17' : '#bcbd22'
-}
-colors = [family_color[dic[id]] for id in ids]
-
-# Plot
-#heatmap = sns.clustermap(matrix, col_colors = colors, row_colors = colors)
-#heatmap.savefig(f'{PLOTS}/core_sequence_heatmap.png', transparent=True)
-
-# Average hierarchical clustering
-from scipy.cluster import hierarchy
+import argparse
 import fastcluster
-Z = fastcluster.linkage(matrix, 'average')
-tree = hierarchy.to_tree(Z, False)
+import pandas as pd
+from .annotations import Annotation
+from scipy.cluster import hierarchy
+from ..config.config_parser import config
 
-def get_newick(node, parent_dist, leaf_names, newick='') -> str:
+def handle_arguments() -> argparse.Namespace:
+    '''
+    Handles the arguments passed via command line.
+
+    Return
+    ------
+    args : argparse.Namespace
+        Arguments
+    '''
+    
+    parser = argparse.ArgumentParser(
+        prog = 'plot_dendrogram',
+        description = 'Generates tree from similarity matrix and'\
+            ' additional annotation files for iTOL',
+        epilog = 'See ya'
+        )
+    
+    # Add arguments
+    parser.add_argument(
+        '-i', '--input_matrix',
+        type = str,
+        help = 'Input similarity matrix path'
+        )
+    
+    parser.add_argument(
+        '-o', '--output_dir',
+        type = str,
+        help = 'Output path where to store the generated files'
+        )
+
+    # Arguments from Namespace object
+    return parser.parse_args()
+
+def get_newick( 
+        node : hierarchy.ClusterNode, 
+        parent_dist : float, 
+        leaf_names : list, 
+        newick : None = ''
+        ) -> str:
     """
-    Convert sciply.cluster.hierarchy.to_tree()-output to Newick format.
+    Uses recursion to convert scipy.cluster.hierarchy.to_tree() output to 
+    Newick format.
 
-    :param node: output of sciply.cluster.hierarchy.to_tree()
-    :param parent_dist: output of sciply.cluster.hierarchy.to_tree().dist
-    :param leaf_names: list of leaf names
-    :param newick: leave empty, this variable is used in recursion.
-    :returns: tree in Newick format
+    Parameters
+    ----------
+    node : scipy.cluster.hierarchy.ClusterNode
+        Output of scipy.cluster.hierarchy.to_tree()
+    
+    parent_dist : float
+        Output of scipy.cluster.hierarchy.to_tree().dist
+    
+    leaf_names : list
+        List of leaf names
+    
+    newick : None
+        LEave empty, this variable is used in recursion
+
+    Returns
+    -------
+    newick : str
+        Tree in Newick format
     """
     if node.is_leaf():
-        return "%s:%.2f%s" % (leaf_names[node.id], parent_dist - node.dist, newick)
+        return "%s:%.2f%s" % (
+            leaf_names[node.id], 
+            parent_dist - node.dist, 
+            newick
+            )
     else:
         if len(newick) > 0:
             newick = "):%.2f%s" % (parent_dist - node.dist, newick)
         else:
             newick = ");"
-        newick = get_newick(node.get_left(), node.dist, leaf_names, newick=newick)
-        newick = get_newick(node.get_right(), node.dist, leaf_names, newick=",%s" % (newick))
+        newick = get_newick(
+            node.get_left(), 
+            node.dist, 
+            leaf_names, 
+            newick = newick
+            )
+        newick = get_newick(
+            node.get_right(), 
+            node.dist, 
+            leaf_names, 
+            newick = ",%s" % (newick)
+            )
         newick = "(%s" % (newick)
+        
         return newick
 
-# Get Newick format
-newick = get_newick(tree, tree.dist, leaf_names = ids)
-print(newick)
-with open(f'{SEQUENCE_CLUSTERING}/his1_tree.txt', 'w') as tree_file:
-    tree_file.write(newick)
+def make_tree(args : argparse.Namespace):
+    '''
+    Converts a similarity matrix to a tree in Newick format.
 
-#  Write annotation color file
-with open(f'{SEQUENCE_CLUSTERING}/his1_annotations_color.txt', 'w') as annotations_file:
-    settings = '''
-DATASET_COLORSTRIP
-#lines starting with a hash are comments and ignored during parsing
-#select the separator which is used to delimit the data below (TAB,SPACE or COMMA).This separator must be used throught this file (except in the SEPARATOR line, which uses space).
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments.
+    
+    Returns
+    -------
+    None.
+    '''
 
-#SEPARATOR TAB
-SEPARATOR SPACE
-#SEPARATOR COMMA
+    # Unpickle similarity matrix
+    similarity_matrix = pd.read_pickle(args.input_matrix)
 
-#label is used in the legend table (can be changed later)
-DATASET_LABEL color_strip1
+    # Average hierarchical clustering
+    Z = fastcluster.linkage(similarity_matrix, 'average')
+    tree = hierarchy.to_tree(Z, False)
 
-#dataset color (can be changed later)
-COLOR #000
+    # Convert tree to newick format
+    newick = get_newick(
+        node = tree, 
+        parent_dist = tree.dist, 
+        leaf_names = similarity_matrix.columns
+        )
 
-#optional settings
+    # Store newick tree file
+    with open(f'{args.output_dir}/tree.txt', 'w') as tree_file:
+        tree_file.write(newick)
 
-#all other optional settings can be set or changed later in the web interface (under 'Datasets' tab)
-COLOR_BRANCHES 0
-#maximum width
-STRIP_WIDTH 25
+def make_colorstrip(args : argparse.Namespace):
+    '''
+    Makes colorstrip annotation file for iTOL plotting of a tree.
 
-#left margin, used to increase/decrease the spacing to the next dataset. Can be negative, causing datasets to overlap.
-MARGIN 0
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments.
+    
+    Returns
+    -------
+    None.
+    '''
 
-#border width; if set above 0, a black border of specified width (in pixels) will be drawn around the color strip 
-BORDER_WIDTH 1
-BORDER_COLOR #000
+    # Unpickle UniProt ID : family fictionary
+    with open(f'{config["data"]}/uniprot_family.pkl', 'rb') as handle:
+        uniprot2family = pickle.load(handle)
 
-#show internal values; if set, values associated to internal nodes will be displayed even if these nodes are not collapsed. It could cause overlapping in the dataset display.
-SHOW_INTERNAL 0
+    # Import family : color dictioonary
+    family2color = config['family2color']
 
-#In colored strip charts, each ID is associated to a color. Color can be specified in hexadecimal, RGB or RGBA notation
-#Internal tree nodes can be specified using IDs directly, or using the 'last common ancestor' method described in iTOL help pages
-#Actual data follows after the "DATA" keyword
-DATA
-'''
-    annotations_file.write(settings)
+    # Build UniProt ID : color dictionary
+    uniprot2colors = {uniprot:family2color[family] \
+              for uniprot, family in uniprot2family.items()}
+    
+    # Make colorstrip annotation file
+    colorstrip = Annotation().colorstrip(uniprot2colors)
 
-    for id in ids:
-        annotations_file.write(f'{id} {family_color[dic[id]]}\n')
+    # Store colostrip annotation file
+    with open(f'{args.output_dir}/colorstip.txt', 'w') as annotation_file:
+        annotation_file.write(colorstrip)
 
+def to_binary(
+        regio : str, 
+        substrate : tuple[str]
+        ) -> tuple[str, str, str]:
 
-#  Write annotation binary file
-from variables import CAZY_EXPANDED, SUPERVISED
+    '''
+    Translate the labels of the entries used for supervised learning to binary
+    labels. With regioselectivity, the label 1 is assigned to C1 and C1/C4 
+    LPMOs and the label 0 is assigned to C4 and C1/C4 LPMOs. With substrate 
+    specificity, the label 1 is assigned to cellulose-degrading LPMOs, the
+    label 0 to chitin-degrading LPMOs and the label -1 to those which degrade
+    neither cellulose not chitin.
 
-df_labels = pd.read_pickle(f'{SUPERVISED}/regioselectivity_substratespecificity_db.pkl')
+    Parameters
+    ----------
+    regio : str
+        Regioselectivity.
 
-def f(regio, substrate):
+    substrate : Tuple[str]
+        Substrate specificity
+
+    Returns
+    -------
+    c1 : str
+        '1' if the entry cleaves at C1 or C1/C4. '0' if the entry cleaves at C4
+        or C1/C4.
+
+    c4 : str
+        '0' if the entry cleaves at C1 or C1/C4. '1' if the entry cleaves at C4
+        or C1/C4.
+
+    ss : str
+        '1' if the entry cleaves cellulose. '0' if the entry cleaves chitin.
+        '-1' if neither.
+
+    '''
+    # Regioselectivity
     if regio == 'C1':
         c1 = '1'
         c4 = '0'
@@ -128,79 +222,59 @@ def f(regio, substrate):
     else:
         c1, c4 = '1', '1'
     
+    # Substrate specificity
     if 'chitin' in substrate:
-        s = '0'
+        ss = '0'
     elif 'cellulose' in substrate:
-        s = '1'
+        ss = '1'
     else:
-        s = '-1'
-    return c1, c4, s
+        ss = '-1'
+    return c1, c4, ss
 
-l = df_labels.apply(lambda x: f(x.Regioselectivity, x['Substrate specificity']), axis = 1)
-d = dict(zip(df_labels['UniProt'], l))
+def make_binary(args):
+    '''
+    Makes binary annotation file for iTOL plotting of a tree.
 
-with open(f'{SEQUENCE_CLUSTERING}/his1_annotations_binary.txt', 'w') as annotations_file:
-    settings = '''DATASET_BINARY
-#select the separator which is used to delimit the data below (TAB,SPACE or COMMA).This separator must be used throught this file (except in the SEPARATOR line, which uses space).
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments.
+    
+    Returns
+    -------
+    None.
+    '''
+    
+    # Read supervised data frame´
+    supervised = pd.read_pickle(f'{config["supervised"]}/labels.pkl')
 
-#SEPARATOR TAB
-#SEPARATOR SPACE
-SEPARATOR COMMA
+    # Make binary labels
+    transform_labels_to_binary = lambda df: to_binary(
+        df['Regioselectivity'], 
+        df['Substrate specificity']
+        )
+    binary_labels = supervised.apply(transform_labels_to_binary, axis = 1)
+    uniprot2binary = dict(zip(supervised['UniProt'], binary_labels))
 
-#label is used in the legend table (can be changed later)
-DATASET_LABEL,binary_data
+    # Make binary annotation file
+    binary = Annotation().binary(uniprot2binary)
 
-#dataset color (can be changed later)
-COLOR,#ff0000
+    # Store binary annotation file
+    with open(f'{args.output_dir}/binary.txt', 'w') as annotation_file:
+        annotation_file.write(binary)
 
-#Binary datasets can contain one or more values for each node. Each value will be represented by a symbol (defined in FIELD_SHAPES) with corresponding color and label (from FIELD_COLORS and FIELD_LABELS). Possible values (defined under DATA below) for each node are 1 (filled shapes), 0 (empty shapes) and -1 (completely ommited).
+def main():
+    '''Program flow.'''
+    
+    # Arguments
+    args = handle_arguments()
 
-#define colors for each individual field column (if not defined all symbols will use the main dataset color, defined in COLOR)
-#shapes for each field column; possible choices are
-#1: rectangle 
-#2: circle
-#3: star
-#4: right pointing triangle
-#5: left pointing triangle
-FIELD_LABELS,rl0,rl1,rl2
-FIELD_COLORS,#000,#000,#66f
-FIELD_SHAPES,4,5,3
+    # Make tree file
+    make_tree(args)
 
-#all other optional settings can be set or changed later in the web interface (under 'Datasets' tab)
+    # Make annotation files
+    make_colorstrip(args)
+    make_binary(args)
 
-#show internal values; if set, values associated to internal nodes will be displayed even if these nodes are not collapsed. It could cause overlapping in the dataset display.
-SHOW_INTERNAL,1
-
-#left margin, used to increase/decrease the spacing to the next dataset. Can be negative, causing datasets to overlap.
-MARGIN,0
-
-#symbol height factor; Default symbol height will be slightly less than the available space between leaves, but you can set a multiplication factor here to increase/decrease it (values from 0 to 1 will decrease it, values above 1 will increase it)
-HEIGHT_FACTOR,1
-
-#increase/decrease the spacing between individual levels, when there is more than one binary level defined 
-SYMBOL_SPACING,10
-
-#Internal tree nodes can be specified using IDs directly, or using the 'last common ancestor' method described in iTOL help pages
-#Actual data follows after the "DATA" keyword
-DATA
-
-#Example dataset with 4 columns (circle, left triangle, right triangle and rectangle):
-#FIELD_SHAPES,2,4,5,1
-#FIELD_LABELS,f1,f2,f3,f4
-#FIELD_COLORS,#ff0000,#00ff00,#ffff00,#0000ff
-#DATA
-#node 9606 will have a filled circle, empty left triangle, nothing in the 3rd column and an empty rectangle
-#9606,1,0,-1,0
-'''
-
-
-    annotations_file.write(settings)
-
-
-    for id in ids:
-        if id  in d:
-            labels = ','.join(d[id])
-            annotations_file.write(f'{id},{labels}\n')
-        else:
-            annotations_file.write(f'{id},-1,-1,-1\n')
-        
+if __name__ == '__main__':
+    main()
