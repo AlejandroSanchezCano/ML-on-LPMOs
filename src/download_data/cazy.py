@@ -1,10 +1,16 @@
-''' CAZy parser
+''' 
+CAZy parser
 
-This file holds the CAZy class, which serves as an API with CAZy database and a
-parser. Some additional features are also available such as retrieve DNA and
-protein FASTA sequences and UniProt ID from the GenBank ID, as well as 
-mapping the UniProt IDs to the PDB.
+This file holds the CAZy class, which serves as a perser and an API to connect
+with CAZy database. Some additional features are also available such as 
+retrieving DNA and protein FASTA sequences and UniProt ID from the GenBank ID, 
+as well as mapping the UniProt IDs to the PDB.
+
+Classes
+-------
+CAZy
 '''
+
 import re
 import bs4
 import requests
@@ -53,7 +59,7 @@ class CAZy():
     __add_pdb
     get_full_sequences
     
-    Subclass
+    Class
     --------
     CAZyError
     
@@ -68,9 +74,6 @@ class CAZy():
         'AA': 'Auxiliary-Activities',
         'CBM': 'Carbohydrate-Binding-Modules'   
     }
-    
-    # Time To Live caching
-    #cache = TTLCache(maxsize=100, ttl=timedelta(hours=2), timer=datetime.now)
     
     class CAZyError(Exception):
         '''Custom CAZy exception'''
@@ -115,12 +118,10 @@ class CAZy():
     def __str__(self):
         return f'CAZy object of CAZyme {self.cazyme}'
     
-    #@cached(cache)
     def __get_soup_class(self) -> bs4.BeautifulSoup:
         '''
         Perform request of the CAZyme class main HTML page and return it as
-        a beautiful soup object to be processed and parsed. This function is
-        TTL cached to avoid sending repetitive requests.        
+        a beautiful soup object to be processed and parsed.    
 
         Raises
         ------
@@ -249,8 +250,7 @@ class CAZy():
     def __get_soup_structure(self) -> bs4.BeautifulSoup:
         '''
         Perform request of the CAZy family structure HTML page and return it as
-        a beautiful soup object to be processed and parsed. This function is
-        TTL cached to avoid sending repetitive requests.        
+        a beautiful soup object to be processed and parsed.  
 
         Raises
         ------
@@ -411,12 +411,10 @@ class CAZy():
 ########################    CHARACTERIZED CAZYMES    ##########################
 ###############################################################################
 
-    # @cached(cache)
     def __get_soup_characterized(self) -> bs4.BeautifulSoup:
         '''
         Perform request of the CAZy characterized structure HTML page and return it as
-        a beautiful soup object to be processed and parsed. This function is
-        TTL cached to avoid sending repetitive requests.        
+        a beautiful soup object to be processed and parsed. 
 
         Raises
         ------

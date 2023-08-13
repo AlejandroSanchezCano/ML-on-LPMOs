@@ -1,8 +1,13 @@
 '''
-Parse structures
+Parse PDB structure
 
-This file holds hte AlphaFoldStructure class, which parses AlphaFold .pdb files
+This file holds the AlphaFoldStructure class, which parses AlphaFold .pdb files
 and retrieves relevant information
+
+Class
+-----
+AlphaFoldStructure
+
 '''
 import os
 import re

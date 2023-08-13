@@ -1,0 +1,14 @@
+---
+  #########
+  # PATHS #
+  #########
+  data: '/home/sanch046/lustre/ML-on-LPMOs/data'
+  CAZy_downloadable_files: '/home/sanch046/lustre/ML-on-LPMOs/data/CAZy_downloadable_files'
+  CAZy_characterized:  '/home/sanch046/lustre/ML-on-LPMOs/data/CAZy_characterized'
+  CAZy_structures:  '/home/sanch046/lustre/ML-on-LPMOs/data'
+  CAZy_expanded:  '/home/sanch046/lustre/ML-on-LPMOs/data/CAZy_expanded'
+
+  supervised: '/home/sanch046/lustre/ML-on-LPMOs/data/supervised'
+  plots: '/home/sanch046/lustre/ML-on-LPMOs/docs/plots'
+
+  AF_all: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_all'

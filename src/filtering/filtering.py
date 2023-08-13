@@ -1,8 +1,8 @@
 '''
 Filter and disregard AlphaFold .pdb structures that:
-    - Have an overall bad quality structure
+    - Have an overall bad quality structure.
     - Do not start with His after removing the signal peptide based on 
-    N-terminal pLDDT, and therefore not considered as LPMOs (2).
+      N-terminal pLDDT, and therefore not considered as LPMOs.
 
 Functions
 ---------
@@ -13,19 +13,54 @@ explore_starts_m
 '''
 
 import os
+import argparse
 import warnings
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from typing import Union, Tuple
 from Bio import BiopythonParserWarning
-from parse_structures import AlphaFoldStructure
-from variables import CAZY_EXPANDED, AF_FILES, AF_HIS1
+from parse_pdb import AlphaFoldStructure
+from ..config.config_parser import config
 warnings.simplefilter('ignore', BiopythonParserWarning)
 
+def handle_arguments():
+    '''
+    Handles the arguments passed via command line
+
+    Return
+    ------
+    args : argparse.Namespace
+        Arguments
+    '''
+
+    # Parser
+    parser = argparse.ArgumentParser(
+        prog = 'filtering',
+        description = 'Filters out non-LPMO structures or with low quality',
+        epilog = 'See ya'
+        )
+    
+    # Add arguments
+    parser.add_argument(
+        '-l', '--length', 
+        type = int, 
+        default = 20,
+        help = 'Peptide length resulting from in-silico fragmentation'
+        )
+    
+    parser.add_argument(
+        '-c', '--cutoff',
+        tyoe
+    )
+
+    # Get argument values
+    args = parser.parse_args()
+    return args
+
 def bad_quality(
-        peptide_length: int = 20,
-        cutoff: Union[int, float] = 90 
+        peptide_length: int,
+        cutoff: Union[int, float] 
         ) -> Tuple[list[str], list[str]]:    
     '''
     Impose a filtering based on overall poor quality structure. To do so, the
@@ -55,9 +90,9 @@ def bad_quality(
     '''
 
     kept, removed = [], []
-    for structure in tqdm(os.listdir(AF_FILES)):
+    for structure in tqdm(os.listdir(config['AF_all'])):
         # Get per-residue pLDDT
-        af_structure = AlphaFoldStructure(f'{AF_FILES}/{structure}')
+        af_structure = AlphaFoldStructure(f"{config['AF_all']}/{structure}")
         quality = af_structure.pLDDT
         # Divide protein in peptides -> matrix of pLDDT values
         peptides = [
@@ -69,7 +104,7 @@ def bad_quality(
                                            for peptide in peptides])
         
         # Assess quality > cutoff
-        if any(mean_pLDDT_per_peptide >= 90):
+        if any(mean_pLDDT_per_peptide >= cutoff):
             kept.append(af_structure)
         else:
             removed.append(af_structure)
@@ -349,6 +384,9 @@ def explore_starts_m(
     
     return success, fails
 
+def custom_vs_signalp():
+    pass
+
 def filter_supreme_df(structures: list[AlphaFoldStructure]) -> None:
 
     # Import supreme data frame
@@ -371,14 +409,11 @@ def filter_supreme_df(structures: list[AlphaFoldStructure]) -> None:
 
         
 def main():
-    '''
-    Program flow.
+    '''Program flow.'''
 
-    Returns
-    -------
-    None.
+    # Argument parsing
+    args = handle_arguments()
 
-    '''
     # Filtering by overall poor structural quality
     print('Filtering bad quality proteins')
     kept, removed = bad_quality(peptide_length = 20, cutoff = 90)
@@ -398,6 +433,10 @@ def main():
     # Remove signal peptide
     print(f'Remove signal peptide of {len(starts_m + checked_not_m_nor_h)} proteins')
     success, fails = explore_starts_m(starts_m + checked_not_m_nor_h)
+
+    # Compare with SignalP
+    print("Comparing custom method with SingalP's")
+    both, none, custom, signalp = custom_vs_signalp(success, fails)
 
     # Make filtered data frame
     filtered_df = filter_supreme_df(success + checked_starts_h)
