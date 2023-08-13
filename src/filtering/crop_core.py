@@ -5,6 +5,13 @@ one. Because this identifying method is not perfect, the distribution of core
 length is plotted to discard those cores with abnormally small or big size. 
 '''
 
+
+
+
+https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.biorxiv.org%2Fcontent%2F10.1101%2F2022.09.22.509116v1.full&psig=AOvVaw0ngEtzqHfsHfS8lJ9Wxrsq&ust=1690714033223000&source=images&cd=vfe&opi=89978449&ved=0CBIQjhxqFwoTCMD_9pbfs4ADFQAAAAAdAAAAABAE
+https://github.com/tristanic/pae_to_domains
+
+
 import os
 import pandas as pd
 import seaborn as sns
