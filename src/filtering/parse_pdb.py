@@ -11,7 +11,6 @@ AlphaFoldStructure
 '''
 import os
 import re
-import math
 import numpy as np
 
 #TODO: - Create an PDB class and a Structure class that is the father of the PDB and AF classes
@@ -94,7 +93,7 @@ class AlphaFoldStructure():
         return f'AlphaFold structure {self.id}'
     
     def __repr__(self):
-        return f'AlphaFold structure {self.id}'
+        return str(self.__dict__)
     
     def __len__(self):
         return len(self.seq)
@@ -178,8 +177,8 @@ class AlphaFoldStructure():
         # Convert to numpy arrays
         self.positions = np.array(self.positions)
         self.pLDDT = np.array(self.pLDDT)
-        self.coordinates = np.matrix(self.coordinates)
-        self.coordinates_per_residue = np.matrix(self.coordinates_per_residue)
+        self.coordinates = np.array(self.coordinates)
+        self.coordinates_per_residue = np.array(self.coordinates_per_residue)
     
     def domains(self, threshold: int = 70, consecutive: int = 3) -> list:
         '''
@@ -277,8 +276,9 @@ class AlphaFoldStructure():
             Protein sequence with residues as uppercase if they neighbour the
             center residue.
         
-        positions : list[int]
-            Index of the residues that neighbor the center residue.
+        neighbours : dict[int, str]
+            Index of the residues that neighbor the center residue paired with
+            the rasidue 1-letter name.
         '''
         # Raise error if the specified residue that acts as the center of
         # the sphere is not present in the sequence
@@ -290,21 +290,23 @@ class AlphaFoldStructure():
         # Get residues close to the center residue
         else:           
             sequence = ''
-            positions = []
-            center = self.coordinates_per_residue[0, :].tolist()[0]
-            for name, coordinates, position in zip(
+            neighbours = []
+            indexes = []
+            distances = []
+            center = self.coordinates_per_residue[position, :]
+            for name, residue_coordinates, position in zip(
                     self.seq, 
                     self.coordinates_per_residue,
-                    self.positions):
-                residue = coordinates.tolist()[0] 
-                distance = math.dist(center, residue)
-                if distance <= radius:
-                    sequence += name.upper()
-                    positions.append(position)
-                else:
-                    sequence += name.lower()
-                    
-        return sequence, positions
+                    self.positions
+                    ):
+                distance = np.linalg.norm(center - residue_coordinates)
+                
+                if distance <= radius and distance > 0:
+                    neighbours.append(self.seq[position - 1])
+                    indexes.append(position - 1)
+                    distances.append(distance)
+        import pandas as pd
+        return pd.DataFrame({'Index' : indexes, 'Distance' : distances}, index = neighbours)
     
     def rewrite_full(self, output_file: str, positions: list[int]) -> None:
         '''
@@ -333,7 +335,7 @@ class AlphaFoldStructure():
                     
     def rewrite_range(self, 
                       output_file: str, 
-                      domains: list[tuple[int, int]]
+                      start_end: tuple[int, int]
                       ) -> None:
         '''
         Rewrites the .pdb file with the subset of the residues specified by the
@@ -343,21 +345,20 @@ class AlphaFoldStructure():
         ----------
         output_file : str
             Path to store new .pdb file version.
-        domains : list[tuple[int, int]]
-            List with the initial and final positions (as a tuple) of a range
-            of residues (like a domain).
+        start_end : tuple[int, int]
+            Initial and final positions (as a tuple) of a range of residues 
+            (like a domain).
 
         Returns
         -------
         None.
         
         '''
-        # Transform domains (list of tuples of ints) in positions (list of ints)
-        positions = []
-        for start, end in domains:
-            positions += list(range(start, end))
-        
-        # Call regular rewrite
+        # Transform domain (tuple) in positions (list of ints)
+        positions = list(range(*start_end))
+
+        # Call rewrite_full
         self.rewrite_full(output_file, set(positions))
-        
-        
+
+#s = AlphaFoldStructure('data/AF_all/A0A0M3QGZ9.pdb')
+#print(s.neighbours(('H', 32), 13))
