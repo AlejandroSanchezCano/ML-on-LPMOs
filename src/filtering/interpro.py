@@ -42,7 +42,7 @@ class InterPro():
 
     def __init__(self, name : str):
         '''
-        SignalP constructor
+        InterPro constructor
 
         Parameters
         ----------

@@ -21,7 +21,7 @@ main
 import os
 import pandas as pd
 from tqdm import tqdm
-import matplotlib.pyplot as plt
+from typing import Union
 from .manual_entries import ManualEntries
 from ..config.config_parser import config
 from ..filtering.parse_pdb import AlphaFoldStructure
@@ -196,6 +196,136 @@ def download(db : pd.DataFrame):
             f"{config['AF_labels_core']}/all/{uniprot}.pdb", 
             core
             )
+
+def C1_vs_non_C1(regioselectivty : str) -> int:
+    '''
+    Converts the three-class regioselectivity problem into a binary problem by
+    assigning 1s to C1-degrading LPMOs and 0s to C4 and C1/C4-degrading LPMOs
+
+    Parameters
+    ----------
+    regioselectivity : str
+        LPMO regioselectivity: either C1, C4 or C1/C4
+    
+    Returns
+    -------
+    1 if C1, 0 else
+    '''
+
+    if regioselectivty == 'C1':
+        return 1
+    else: 
+        return 0
+
+def C4_vs_non_C4(regioselectivty : str) -> int:
+    '''
+    Converts the three-class regioselectivity problem into a binary problem by
+    assigning 1s to C4-degrading LPMOs and 0s to C1 and C1/C4-degrading LPMOs
+
+    Parameters
+    ----------
+    regioselectivity : str
+        LPMO regioselectivity: either C1, C4 or C1/C4
+    
+    Returns
+    -------
+    1 if C4, 0 else
+    '''
+
+    if regioselectivty == 'C4':
+        return 1
+    else: 
+        return 0
+
+def C1_vs_C4(regioselectivty : str) -> Union[int, None]:
+    '''
+    Converts the three-class regioselectivity problem into a binary problem by
+    assigning 1s to C1-degrading LPMOs and 0s to C4-degrading LPMOs, 
+    disregarding C1/C4-degrading enzymes.
+
+    Parameters
+    ----------
+    regioselectivity : str
+        LPMO regioselectivity: either C1, C4 or C1/C4
+    
+    Returns
+    -------
+    1 if C1, 0 if C4, None else.
+    '''
+
+    if regioselectivty == 'C1':
+        return 1
+    elif regioselectivty == 'C4':
+        return 0
+    else: 
+        return None
+
+def cellulose_vs_chitin(ss : str) -> Union[str, None]:
+    '''
+    Converts the multiclass regioselectivity problem into a binary problem by
+    assigning 1s to cellulose-degrading LPMOs and 0s to chitin-degrading LPMOs,
+    disregarding non-cellulose- and non-chitin degrading enzymes.
+
+    Parameters
+    ----------
+    ss : str
+        LPMO substrate specificity: it can be chitin, cellulose, xyloglycan, 
+        homogelacturonan, etc.
+    
+    Returns
+    -------
+    1 if cellulose, 0 if chitin, None if both or none of them.
+    '''
+    if 'cellulose' in ss and 'chitin' in ss:
+        return None
+    elif 'cellulose' in ss:
+        return 1
+    elif 'chitin' in ss:
+        return 0
+    else: 
+        return None
+
+def prepare_labels_for_ML(db : pd.DataFrame) -> pd.DataFrame:
+    '''
+    Prepare the characterized LPMO database for the use of machine learning 
+    algorithms. This is done by assigning 1s and 0s to the different classes of
+    a problem, removing the entries that will not be used by a specific problem,
+    and storing the results independently.
+
+    Parameters
+    ----------
+    db : pd.DataFrame
+        Characterized LPMOs
+    
+    Returns
+    -------
+    None.
+    '''
+
+    # Problem : binarizer function
+    filters = {
+        'C1' : ('Regioselectivity', C1_vs_non_C1),
+        'C4' : ('Regioselectivity', C4_vs_non_C4),
+        'C1C4' : ('Regioselectivity', C1_vs_C4),
+        'SS' : ('Substrate specificity', cellulose_vs_chitin)
+    }
+
+    # Iterate over all the problems available
+    for problem, (column, binarizer) in filters.items():
+
+        # Apply binarizer function
+        db['y'] = db[column].apply(lambda x : binarizer(x))
+
+        # Remove rows that are not needed (None)
+        db_dropnaed = db.dropna(subset = 'y')
+
+        # Copy AF files to specific directory (e.g. all --> SS)
+        for uniprot in db_dropnaed['UniProt']:
+            os.system(f"cp {config['AF_labels_core']}/all/{uniprot}.pdb \
+                  {config['AF_labels_core']}/{problem}")
+            
+        # Store labels database
+        db_dropnaed.to_pickle(f"{config['supervised']}/{problem}.pkl")
 
 def characterized_vs_all() -> set:
     '''
@@ -388,6 +518,9 @@ def main():
 
     # Download labels
     download(db)
+
+    # Prepare for machine learning
+    prepare_labels_for_ML(db)
 
     # Is there any new LPMO not in CAZy or BRENDA?
     new_entries = characterized_vs_all()
