@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from typing import Union, Tuple
+from typing import Union
 from .parse_pdb import AlphaFoldStructure
 from ..config.config_parser import config
 

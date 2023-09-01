@@ -18,7 +18,7 @@ def main():
     df = pd.read_pickle(f"{config['CAZy_expanded']}/all.pkl")
     dic = dict(zip(df['UniProt'], df['Family']))
 
-    with open(f"{config['data']}/uniprot_family.pkl", 'wb') as file:
+    with open(f"{config['data']}/uniprot2family.pkl", 'wb') as file:
         pickle.dump(dic, file)
 
 if __name__ == '__main__':

@@ -10,6 +10,9 @@ strategies can be employed:
 - neighbors = custom method in which, for each His in the beginning of the 
   protein, the presence of the other residues of the histidine brace (i.e. His 
   and Trp or Tyr) are checked.
+- interpro = InterPro REST API is used to get the predicted domains stored in
+  in the database
+- dpam - DPAM predicts domains for AlphaFold models
 
 Functions
 ---------
@@ -22,6 +25,7 @@ signalp
 neighbors
 domains
 interpro
+dpam
 compare
 store
 '''
@@ -94,7 +98,7 @@ def starting_residue(
     starts_h : list[AlphaFoldStructure]
         List of AlphaFoldStructure objects that start with His
         
-    not_m-nor_h : list[AlphaFoldStructure]
+    not_m_nor_h : list[AlphaFoldStructure]
         List of AlphaFoldStructure objects that start with not Met nor His
     
     '''
@@ -478,6 +482,52 @@ def interpro(structures : list[AlphaFoldStructure]) -> dict[str, int]:
 
     return filter_result
 
+def dpam(structures : list[AlphaFoldStructure]) -> dict[str, int]:
+    '''
+    Get results from running DPAM on all the dataset enzymes. Disregard the
+    cases where the length of thr first predicted domain is < 100 or > 250 (the
+    average is around 165 residues). Finally, validate the presence of a His
+    residue at the beginning of the domain.
+
+    Parameters
+    ----------
+    structures : list[AlphaFoldStructure]
+        List of AlphaFold structures
+    
+    Returns
+    -------
+    filter_result : dict[str, int]
+        Dictionary containing the UniProt IDs paired with the sequence index of
+        the identified His belonging to a histidine brace. When no His 
+        belonging to a histidine brace is found, the UniProt ID is paired with 
+        the value None.
+    '''
+    
+    # Initiate output variables
+    filter_result = {}
+
+    # Open pickled dict
+    with open(f'{config["data"]}/uniprot2domains.pkl', 'rb') as handle:
+        uniprot2domains = pickle.load(handle)
+
+    for structure in tqdm(structures):
+        # Get the location of the first domain predicted by DPAM
+        domain1 = uniprot2domains[structure.id][0]
+
+        # Only proceed if the domain length is between 100 and 250 residues
+        if len(domain1) < 100 or len(domain1) > 250:
+            filter_result[structure.id] = None
+
+        # Validate start  
+        else:
+            filter_result[structure.id] = hist_around_cut(
+                seq = structure.seq,
+                cut = domain1[0] - 1, 
+                window_length = 3
+                ) 
+
+    return filter_result
+
 def compare(results : dict[str, int]) -> pd.DataFrame:
     '''
     The UniProt entries where the signal peptide can be successfully (i.e. a
@@ -596,7 +646,8 @@ def main():
         'signalp' : signalp,
         'neighbors' : neighbors,
         'domains' : domains,
-        'interpro' : interpro
+        'interpro' : interpro,
+        'dpam' : dpam
     }
     
     # Run the passed methods

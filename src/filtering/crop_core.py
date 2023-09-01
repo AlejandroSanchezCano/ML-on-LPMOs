@@ -1,55 +1,46 @@
 '''
-Crop enzymatic core by using AlphaFoldStructure's pLDDT-based feature of 
-identifying protein domains. For LPMOs, the enzymatic core is always the first
-one. Because this identifying method is not perfect, the distribution of core
-length is plotted to discard those cores with abnormally small or big size. 
+Crop core.
+Use DPAM domain predictions to calculate the enzymatic core of the LPMO 
+accessions. The length of the core is plot as an easy way of measuring 
+the number of erroneous predictions. Those predictiosn with a core too long
+or too short for an LPMO (arounf 165 aa) will be disregarded.
 '''
 
-
-
-
-https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.biorxiv.org%2Fcontent%2F10.1101%2F2022.09.22.509116v1.full&psig=AOvVaw0ngEtzqHfsHfS8lJ9Wxrsq&ust=1690714033223000&source=images&cd=vfe&opi=89978449&ved=0CBIQjhxqFwoTCMD_9pbfs4ADFQAAAAAdAAAAABAE
-https://github.com/tristanic/pae_to_domains
-
-
 import os
-import pandas as pd
+import pickle
 import seaborn as sns
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-from parse_structures import AlphaFoldStructure
-from variables import AF_HIS1, PLOTS, AF_CORE, CAZY_EXPANDED
+from ..config.config_parser import config
+from .parse_pdb import AlphaFoldStructure
 
-# Initialize necessary variables
-structures, core_lengths = [], []
-# Loop over filtered proteins
-for protein in tqdm(os.listdir(AF_HIS1)):
-    # Parse AF file
-    structure = AlphaFoldStructure(f'{AF_HIS1}/{protein}')
-    # Get core  (first domain)
-    core = structure.domains(threshold = 70)[0]
-    core_length = core[1] - core[0]
-    core_lengths.append(core_length)
-    # Store core
-    if core_length > 120 and core_length < 280:
-        structure.rewrite_range(
-            output_file = f'{AF_CORE}/{protein}', 
-            domains = [core])
+def main():
+    '''Program flow.'''
 
-# Plot core length distribution to choose cutoffs
-ax = sns.histplot(core_lengths, kde = True)
-ax.set(xlabel = 'Core length')
-ax.axvline(120, color = 'red')
-ax.axvline(280, color = 'red')
-plt.savefig(f'{PLOTS}/core_lengths.png', transparent=True)
+    # Import DPAM predictions
+    with open(f'{config["data"]}/uniprot2domains.pkl', 'rb') as handle:
+        uniprot2domains = pickle.load(handle)
 
-# Filter supreme data frame
-supreme_df = pd.read_pickle(f'{CAZY_EXPANDED}/AA_supreme')
-core_df = pd.DataFrame({'UniProt': [structure.id for structure in structures]})
-filtered = pd.merge(
-    left = supreme_df,
-    right = core_df,
-    how = 'inner',
-    on = 'UniProt',
-)
-core_df.to_pickle(f'{CAZY_EXPANDED}/AA_core')
+    # Filter DPAM predictions
+    filtered_uniprot2domains = {uniprot : uniprot2domains[uniprot]\
+                                for uniprot in os.listdir(config['AF_his1'])}
+    
+    # Calculate enzymatic domain length
+    lengths = []
+    for domains in filtered_uniprot2domains.values():
+        core_length = domains[0][1] - domains[0][0]
+        lengths.append(core_length)
+    
+    # Plot enzymatic domain length
+    ax = sns.histplot(lengths, kde = True)
+    ax.set(xlabel = 'Core length')
+    plt.savefig(f'{config["plots"]}/core_lengths.png', transparent=True)
+
+    # Save core
+    for uniprot, domains in filtered_uniprot2domains.items():
+        core_length = domains[0][1] - domains[0][0]
+        if core_length > 100 and core_length < 250:
+            structure = AlphaFoldStructure(f'{config["AF_his1"]}/{uniprot}.pdb')
+            structure.rewrite_range(structure.position[0], domains[0][1] - 1)
+
+if __name__ == '__main__':
+    main()
