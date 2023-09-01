@@ -136,7 +136,8 @@ def kmer_ML(args : argparse.Namespace, k : int):
         )
 
     # Map kmer to sequence
-    for rank in range(0, 4):
+    protein_popularity = {}
+    for rank in range(0, 5):
         kmer = feature_importance.at[rank, 'Feature']
         importance = feature_importance.at[rank, 'Importance']
         proteins = [uniprot for uniprot, kmers in uniprot2kmercounts.items() if kmer in kmers]
@@ -154,6 +155,14 @@ def kmer_ML(args : argparse.Namespace, k : int):
                 report.write(f'{pdb_name} --> {indeces}\n')
 
             report.write(f'\n{"-"*80}\n')
+        
+        # See which protein is gets more repeated
+        for pdb_name in proteins:
+            if pdb_name not in protein_popularity:
+                protein_popularity[pdb_name] = 1
+            else:
+                protein_popularity[pdb_name] += 1
+    print(protein_popularity)
 
     return accuracy
 

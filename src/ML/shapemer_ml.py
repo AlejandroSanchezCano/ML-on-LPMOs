@@ -250,6 +250,8 @@ def feature_importance(args):
         structure = AlphaFoldStructure(f"{config['AF_labels_core']}/{args.problem}/{file}.pdb")
         seqs[file + '.pdb'] = structure.seq
 
+
+    protein_popularity = {}
     for rank in range(0, 5):
 
         # Map shapemer to residues
@@ -266,9 +268,17 @@ def feature_importance(args):
                 start = start[0][0]
                 indeces = [i + start for i in residue_indices[pdb_name]]
                 residues = [seqs[pdb_name][i - start] for i in indeces]
-                report.write(f'{pdb_name} --> {indeces} --> {residues}\n')
+                report.write(f"{pdb_name} --> {'+'.join(map(str, indeces))} --> {residues}\n")
 
             report.write(f'\n{"-"*80}\n')
+
+        # See which protein is gets more repeated
+        for pdb_name in residue_indices:
+            if pdb_name not in protein_popularity:
+                protein_popularity[pdb_name] = 1
+            else:
+                protein_popularity[pdb_name] += 1
+    print(protein_popularity)
 
     # Feature importance SHAP
     #explainer_lpmo = shap.Explainer(logreg.predict, X_test, max_evals = 1000)
