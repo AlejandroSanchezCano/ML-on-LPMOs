@@ -159,7 +159,7 @@ def make_colorstrip(args : argparse.Namespace):
     '''
 
     # Unpickle UniProt ID : family fictionary
-    with open(f'{config["data"]}/uniprot_family.pkl', 'rb') as handle:
+    with open(f'{config["data"]}/uniprot2family.pkl', 'rb') as handle:
         uniprot2family = pickle.load(handle)
 
     # Import family : color dictioonary
