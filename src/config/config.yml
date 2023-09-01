@@ -15,6 +15,11 @@
   AF_labels: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_labels'
   AF_labels_core: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_labels_core'
   AF_his1: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_his1'
+  AF_cif: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_cif'
+  AF_pae: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_pae'
+  DPAM_results: '/home/sanch046/lustre/ML-on-LPMOs/data/DPAM_results'
+  DPAM_tool: '/home/sanch046/lustre/DPAM'
+  AF_core: '/home/sanch046/lustre/ML-on-LPMOs/data/AF_core'
   SignalP: '/home/sanch046/lustre/ML-on-LPMOs/data/SignalP'
   InterPro: '/home/sanch046/lustre/ML-on-LPMOs/data/InterPro'
   FASTA: '/home/sanch046/lustre/ML-on-LPMOs/data/FASTA'
@@ -31,3 +36,4 @@
     AA17: '#bcbd22'
 
   ML: '/home/sanch046/lustre/ML-on-LPMOs/data/ML'
+  pymol: '/home/sanch046/lustre/ML-on-LPMOs/data/pymol'

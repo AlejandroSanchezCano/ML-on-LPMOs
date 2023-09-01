@@ -9,15 +9,14 @@ parse_config
 '''
 
 import yaml
-from typing import Any
 
-def parse_config() -> dict[Any, Any]:
+def parse_config() -> dict:
     '''
     Parses config.yml file and returns its content as a dictionary.
 
     Returns
     -------
-    config : dict[Any, Any]
+    config : dict
         config dictionary 
     '''
 
