@@ -51,7 +51,7 @@ def make_database() -> pd.DataFrame:
         ('AA9', 'CvAA9A', 'A0A223GEC9', 'C1/C4', ('cellulose', 'xyloglucan', 'glucomannan'), (22, 248), False, ('5nlt', '6ydc', '6ydd', '6yde', '6ydf')), 
         ('AA9', 'FgLPMO9A', 'I1REU9', 'C1/C4', ('cellulose', 'xyloglucan'), (21, 241), False, None),
         ('AA9', 'GtLPMO9A-2', 'A0A1C9ZMC5', 'C1/C4', ('cellulose', 'xyloglucan', 'glucomannan'), (0, 230), True, None),
-        ('AA9', 'GtLPMO9B', 'F8T947', 'C1/C4', ('cellulose'), (20, 252), False, None),
+        ('AA9', 'GtLPMO9B', 'F8T947', 'C1/C4', ('cellulose', 'xyloglucan'), (20, 252), False, None),
         # ('AA9', 'GcLPMO9A', 'A0A0J9XKT0', 'C1/C4', ('cellulose', 'xyloglucan')), # no structure
         ('AA9', 'GcLPMO9B', 'A0A0J9XL55', 'C1/C4', ('cellulose', 'xyloglucan'), (18, 240), True, None), 
         ('AA9', 'HiLPMO9B', 'W4KMP1', 'C1', ('cellulose'), (19, 244), False, ('5nns')),
@@ -70,7 +70,7 @@ def make_database() -> pd.DataFrame:
         ('AA9', 'MtLPMO9L', 'G2QJT0', 'C1', ('cellulose'), (17, 224), False, None),
         ('AA9', 'MYCTH_112089', 'G2QI82', 'C1', ('cellulose'), (17, 232), False, None),
         ('AA9', 'NCU00836', 'Q7SCJ5', 'C1', ('cellulose'), (18, 220), True, None),
-        ('AA9', 'NcLPMO9D', 'Q1K8B6', 'C4', ('cellulose'), (15, 238), False, ('4eir', '7t5c', '7t5e')),
+        ('AA9', 'NcLPMO9D', 'Q1K8B6', 'C4', ('cellulose', 'glucomannan'), (15, 238), False, ('4eir', '7t5c', '7t5e')),
         ('AA9', 'NcLPMO9J', 'Q7SHD9', 'C1', ('cellulose'), (20, 265), True, None),
         ('AA9', 'NcLPMO9A', 'Q7S439', 'C4', ('cellulose'), (15, 237), True, ('5foh')),
         ('AA9', 'NcLPMO9C', 'Q7SHI8', 'C4', ('cellulose', 'xyloglucan', 'glucomannan'), (16, 243), True, ('4d7u', '4d7v')),
@@ -90,6 +90,11 @@ def make_database() -> pd.DataFrame:
         ('AA9', 'TaLPMO9A', 'G3XAP7', 'C1/C4', ('cellulose', 'xylan'), (0, 228), False, ('2yet', '3zud', '7pu1', '7pz3', '7pz4', '7pz5', '7pz6', '7pz7', '7pz8', '7q1k')),
         ('AA9', 'HjLPMO9A', 'O14405', 'C1/C4', ('cellulose'), (21, 268), True, None),
         ('AA9', 'TtLPMO9E', 'G2RGE5', 'C1', ('cellulose'), (18, 226), False, None),
+        ('AA9', 'McAA9A', 'A0A5J6BJT3', 'C1/C4', ('cellulose', 'xyloglucan', 'glucomannan'), (22, 250), False, None),
+        ('AA9', 'McAA9B', 'A0A5J6BJT1', 'C1/C4', ('cellulose', 'xyloglucan'), (18, 245), False, None),
+        ('AA9', 'McAA9F', 'A0A5J6BJN2', 'C1/C4', ('cellulose', 'xyloglucan'), (20, 242), False, ('7ntl')),
+        ('AA9', 'McAA9H', 'A0A5J6BJQ5', 'C1', ('cellulose', 'xylan'), (17, 230), False, None),
+        ('AA9', 'CtPMO1', 'G0SDM5', 'C1/C4', ('cellulose'), (17, 246), False, None),
 
         # AA10 
         ('AA10', 'AsLPMO10A', 'B6EQB6', 'C1', ('chitin'), (24, 205), True, None),
@@ -128,16 +133,20 @@ def make_database() -> pd.DataFrame:
         # ('AA10', 'LpsAA10A', 'A0A8K1XN59', 'C1', ('cellulose')), # no structure
         ('AA10', 'lytic chitin monooxygenase', 'W5QLL4', 'C1', ('chitin'), (24, 206), False, ('6if7')),
         # ('AA10', 'fusolin (ACV034)', 'O70709', 'C1', ('chitin'), (16, 246), False, ('4yn1')), no AF structure
+        ('AA10', 'MaLPMO10B', 'D9SZQ3', 'C1', ('cellulose', 'chitin'), (36, 230), True, ('5opf')), # C1 with chitin
+        ('AA10', 'BcLPMO10A', 'Q81CG6', 'C1', ('chitin'), (40, 212), True, None),
 
         # AA11
         ('AA11', 'AfAA11A', 'B0XZD3', 'C1', ('chitin'), (18, 219), False, ('7p3u')),
         ('AA11', 'A0AA11', 'Q2UA85', 'C1', ('chitin'), (19, 235), True, ('4mah', '4mai')),
 
         # AA13
-        ('AA13', 'AnAA13', 'A0A1U8QN05', 'C1', ('chitin'), (18, 254), True, None),
-        ('AA13', 'A0AA13', 'Q2U8Y3', 'C1', ('chitin'), (46, 279), False, ('4opb', '5lsv', '5t7j', '5t7k', '5t7n', '6tbq', '6tbr', '6tc4')),
-        ('AA13', 'AtLPMO13A', 'Q0CGA6', 'C1', ('chitin'), (17, 250), True, None),
-        ('AA13', 'NcAA13', 'Q6MWQ3', 'C1', ('chitin'), (18, 273), True, None),
+        ('AA13', 'AnAA13', 'A0A1U8QN05', 'C1', ('starch'), (18, 254), True, None),
+        ('AA13', 'AoAA13', 'Q2U8Y3', 'C1', ('starch'), (46, 279), False, ('4opb', '5lsv', '5t7j', '5t7k', '5t7n', '6tbq', '6tbr', '6tc4')),
+        ('AA13', 'AtLPMO13A', 'Q0CGA6', 'C1', ('starch'), (17, 250), True, None),
+        ('AA13', 'NcAA13', 'Q6MWQ3', 'C1', ('starch'), (18, 273), True, None),
+        ('AA13', 'MoLPMO13A', 'A0A151V4J3', 'C1', ('starch'), (17, 248), True, None),
+        ('AA13', 'MtAA13', 'G2QP40', 'C1', ('starch'), (18, 251), True, None),
 
         # AA14
         ('AA14', 'PcAA14A', 'A0A2I6QB00', 'C1', ('xylan'), (18, 299), False, None),
@@ -146,7 +155,7 @@ def make_database() -> pd.DataFrame:
         # AA15
         ('AA15', 'AaAA15', 'W4GRV7', 'C1', ('chitin'), (19, 218), True, None),
         ('AA15', 'TdAA15A', 'A0A2N8U5K6', 'C1', ('chitin', 'cellulose'), (20, 213), False, None),
-        ('AA15', 'TdAA15B', 'A0A2N8U5I8', 'C1', ('chitin', 'cellulose'), (19, 212), False, None),
+        ('AA15', 'TdAA15B', 'A0A2N8U5I8', 'C1', ('chitin'), (19, 212), False, None),
 
         # AA16
         ('AA16', 'AaAA16', 'A0A1L9X7U6', 'C1', ('cellulose'), (19, 192), False, None),
@@ -362,9 +371,9 @@ def add_new_entries():
 
     # Create ManualEntries object
     manual = ManualEntries(
-        families = ['AA9', 'AA9', 'AA9', 'AA16'],
-        domains = ['Eukaryota', 'Eukaryota', 'Eukaryota', 'Eukaryota'],
-        uniprot_ids = ['W4K498', 'A0A0J9XL55', 'W4K8M0', 'A0A1L9X7U6']
+        families = ['AA9', 'AA9', 'AA9', 'AA9', 'AA16'],
+        domains = ['Eukaryota', 'Eukaryota', 'Eukaryota', 'Eukaryota', 'Eukaryota'],
+        uniprot_ids = ['G0SDM5', 'W4K498', 'A0A0J9XL55', 'W4K8M0', 'A0A1L9X7U6']
     )
 
     # Add information

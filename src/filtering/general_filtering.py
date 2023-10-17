@@ -151,6 +151,10 @@ def main():
     # Filter
     result = bad_quality(args.length, args.cutoff)
 
+    # Remove entries
+    for uniprot in result['nopass']:
+        os.system(f'rm data/AF_all/{uniprot}.pdb')
+
     # Update database
     update_db(result)
 

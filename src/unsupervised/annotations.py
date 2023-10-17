@@ -99,7 +99,7 @@ class Annotation():
             # Binary-specific attributes
             field_labels : Union[str, Tuple[str]] = ('C1', 'C4', 'substrate'),
             field_colors : Union[str, Tuple[str]] = ('#000', '#000', '#66f'),
-            field_shapes : Union[str, Tuple[str]] = (5, 4, 3),
+            field_shapes : Union[str, Tuple[str]] = (4, 5, 3),
             height_factor : int = 85,
             symbol_spacing : int = 10
 

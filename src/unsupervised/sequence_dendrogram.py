@@ -76,10 +76,10 @@ def pairwise_alignment(args : argparse.Namespace):
     X = matrix + matrix.T - np.diag(np.diag(matrix))
 
     # Normalized matrix
-    X_norm = X/np.diag(X)[:, None]
+    #X = X/np.diag(X)[:, None]
 
-    # Save matrix by protein length
-    matrix = pd.DataFrame(X_norm, columns = labels, index = labels)
+    # Save matrix
+    matrix = pd.DataFrame(X, columns = labels, index = labels)
     matrix.to_pickle(args.output_file)
 
 def main():

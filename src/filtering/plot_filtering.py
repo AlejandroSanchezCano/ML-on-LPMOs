@@ -47,9 +47,10 @@ def main():
 
     # Add filtered AlphaFold IDs per family
     af_proteins = [protein.replace('.pdb', '')\
-                   for protein in os.listdir(config['AF_his1'])] 
+                   for protein in os.listdir(config['AF_core'])] 
     filtered_uniprot2family = {uniprot:uniprot2family[uniprot]\
                                for uniprot in af_proteins}
+
     for family in families:
         plot[family].append(list(filtered_uniprot2family.values()).count(family))
     
@@ -98,6 +99,7 @@ def main():
     plt.savefig(f'{config["plots"]}/zoomed_filtering.png', transparent=True)
     plt.show()
 
+    print(plot)
 
 if __name__ == '__main__':
     main()

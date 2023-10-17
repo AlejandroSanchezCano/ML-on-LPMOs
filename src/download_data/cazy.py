@@ -468,7 +468,7 @@ class CAZy():
         return df
         
     def get_sequences(self, local_path = None, download_path =  None) -> pd.DataFrame:
-        'only yse download if local_path is nule'
+        'only use download if local_path is nule'
         if local_path and download_path:
             raise CAZy.CAZyError("Only use download_path 'download_path' argument when the 'local_path' argument is not specified ")
         if local_path:

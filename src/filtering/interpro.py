@@ -87,7 +87,7 @@ class InterPro():
         request = requests.get(url)
         json = request.json()
         total = json['count']
-
+        
         # Get domains
         domains = defaultdict(list)
         batch_size = 200
@@ -96,6 +96,7 @@ class InterPro():
         for _ in tqdm(range(math.ceil(total/batch_size))):
             request = requests.get(url)
             json = request.json()
+            
             for accession in json['results']:
                 uniprot = accession['metadata']['accession']
                 
@@ -114,7 +115,10 @@ class InterPro():
                                           for fragment in fragments]
                     
             # Next batch
-            url = json['next']
+            if json['next'] is None:
+                break
+            else:
+                url = json['next']
             time.sleep(1)
 
         return domains

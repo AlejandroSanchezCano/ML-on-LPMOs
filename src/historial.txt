@@ -5,8 +5,10 @@ cd lustre/ML-on-LPMOs
 python -m src.download_data.download_cazy_lpmos
 python -m src.download_data.download_brenda_lpmos
 python -m src.download_data.labels
-python -m src.download_data.uniprot_family
+python -m src.download_data.make_uniprot2family
 python -m src.download_data.download_af_lpmos
+python -m src.filtering.make_fasta -i data/AF_all -o data/FASTA/all.fasta
+python -m src.filtering.make_fasta -i data/AF_labels_core/all -o data/FASTA/labels_core.fasta
 
 # Download SignalP (different environment?)
 mkdir signalp6
@@ -19,5 +21,20 @@ rm -r signalp6
 # Filtering
 python -m src.filtering.general_filtering -l 20 -c 90
 python -m src.filtering.interpro
-python -m src.filtering.signalp
-python -m src.filtering.his1_filtering -m INSERT_METHODS
+python -m src.filtering.signalP
+python -m src.filtering.his1_filtering -c -m neighbors dpam interpro signalp domains
+python -m src.filtering.his1_filtering -m neighbors 
+python -m src.filtering.crop_core
+python -m src.filtering.make_fasta -i data/AF_core -o data/FASTA/core.fasta
+python -m src.filtering.plot_filtering
+
+# Unsupervised learning
+python -m src.unsupervised.sequence_dendrogram -i data/FASTA/core.fasta -o data/Dendrogram/sequence/similarity_matrix.pkl
+python -m src.unsupervised.plot_dendrogram -c -i data/Dendrogram/sequence/similarity_matrix.pkl -o data/Dendrogram/sequence/
+
+python -m src.unsupervised.plot_dendrogram -c -i data/Dendrogram/structure/similarity_matrix.pkl -o data/Dendrogram/structure/
+
+python -m src.unsupervised.sequence_dendrogram -i data/FASTA/labels_core.fasta -o data/Dendrogram/labels/similarity_matrix.pkl
+python -m src.unsupervised.plot_dendrogram -c -i data/Dendrogram/labels/similarity_matrix.pkl -o data/Dendrogram/labels/
+
+python -m src.unsupervised.plot_dendrogram -c -i data/Dendrogram/labels_structure/similarity_matrix.pkl -o data/Dendrogram/labels_structure/

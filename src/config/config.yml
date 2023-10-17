@@ -23,6 +23,7 @@
   SignalP: '/home/sanch046/lustre/ML-on-LPMOs/data/SignalP'
   InterPro: '/home/sanch046/lustre/ML-on-LPMOs/data/InterPro'
   FASTA: '/home/sanch046/lustre/ML-on-LPMOs/data/FASTA'
+  Dendrogram: '/home/sanch046/lustre/ML-on-LPMOs/data/Dendrogram'
   
   family2color:
     AA0: '#e377c2'

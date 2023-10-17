@@ -8,12 +8,12 @@ Functions
 main()
 '''
 
-from cazy import CAZy
+from .cazy import CAZy
 from ..config.config_parser import config
 
 def main():
     '''Program flow'''
-    for family in [0, 9, 10, 11, 13, 14, 15, 16, 17]:
+    for family in [0, 9, 11, 13, 14, 15, 16, 17]:
         # Instantiate LPMO family object
         cazyme = CAZy('AA', family)
 
@@ -22,7 +22,7 @@ def main():
             print(f'Fetch structural data for family {cazyme.cazyme}')
             structures = cazyme.get_structures()
             print(f'Fetch characterized data for family {cazyme.cazyme}')
-        characterized = cazyme.get_characterized()
+            characterized = cazyme.get_characterized()
         print(f'Fetch sequence data for family {cazyme.cazyme}')
         sequences = cazyme.get_sequences()
         print(f'Fetch full sequence data for family {cazyme.cazyme}')

@@ -47,20 +47,20 @@ def handle_arguments() -> argparse.Namespace:
     parser_optimization.add_argument(
         '--kmers', '-k',
         type = np.ndarray,
-        default = np.arange(0,12),
+        default = np.array([6]),#np.arange(0,12),
         help = 'k-mer-based fragmentation'
         )
     parser_optimization.add_argument(
         '--radiuses', '-o',
         type = np.ndarray,
-        default = np.arange(0,12),
+        default = np.array([0]),#np.arange(0,12),
         help = 'Radius-based fragmentation'
         )
 
     parser_optimization.add_argument(
         '--resolutions', '-r', 
         type = np.ndarray, 
-        default = np.array([0.001, 0.01, 0.1, 0.5, 1, 2, 4, 6, 8, 10]),
+        default = np.array([2]),#np.array([0.001, 0.01, 0.1, 0.5, 1, 2, 4, 6, 8, 10]),
         help = 'Coarse-grainness of the shapemers'
         )
     
@@ -143,6 +143,8 @@ def optimize(args):
                 
                 # Calculate matrix
                 experiment.run_embedding(invariants, resolution)
+                #print(experiment.embedding(1)[(6, 0, 5, 12)].loc['Q9S296'])
+                print(experiment.embedding(100))
 
                 # Accuracy = 0 when only one shapemer is detected
                 if experiment.embedding(100).shape[1] == 1:
@@ -187,8 +189,14 @@ def optimize(args):
                     cv = cv, 
                     n_jobs = -1
                     )
-                accuracy = np.mean(scores)
-                accuracies[(kmer, radius, resolution)] = accuracy * 100
+                
+                b_accuracy = metrics.balanced_accuracy_score(db['y'], scores)
+                accuracy = metrics.accuracy_score(db['y'], scores)
+                accuracies[(kmer, radius, resolution)] = (accuracy * 100, b_accuracy * 100)
+
+                print(db['y'])
+                print(scores)
+                print(accuracy)
 
                 # Update progress bar
                 pbar.update()

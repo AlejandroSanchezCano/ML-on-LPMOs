@@ -61,7 +61,7 @@ def handle_arguments() -> argparse.Namespace:
     parser.add_argument(
         '-m', '--method',
         nargs = '+', 
-        choices = ['signalp', 'neighbors', 'domains', 'interpro'],
+        choices = ['signalp', 'neighbors', 'domains', 'interpro', 'dpam'],
         help = 'Performs any or a combination of different methods to identify signal peptides'
         )
     
@@ -383,6 +383,9 @@ def neighbors(structures : list[AlphaFoldStructure]) -> dict[str, int]:
                 else:
                     filter_result[structure.id] = None
 
+            # Just in case there is no H
+            filter_result[structure.id] = None
+
     return filter_result
 
 def domains(structures : list[AlphaFoldStructure]) -> dict[str, int]:
@@ -511,11 +514,19 @@ def dpam(structures : list[AlphaFoldStructure]) -> dict[str, int]:
         uniprot2domains = pickle.load(handle)
 
     for structure in tqdm(structures):
-        # Get the location of the first domain predicted by DPAM
-        domain1 = uniprot2domains[structure.id][0]
+        # Get the location of the first domain predicted by DPAM 
+        domains = uniprot2domains[structure.id]
 
+        # Account for some cases where DPAM fails
+        if domains == []:
+            filter_result[structure.id] = None
+            continue
+        else:
+            domain1 = domains[0]
+        
         # Only proceed if the domain length is between 100 and 250 residues
-        if len(domain1) < 100 or len(domain1) > 250:
+        len_domain1 = domain1[1] - domain1[0]
+        if len_domain1 < 100 or len_domain1 > 250:
             filter_result[structure.id] = None
 
         # Validate start  
@@ -525,6 +536,11 @@ def dpam(structures : list[AlphaFoldStructure]) -> dict[str, int]:
                 cut = domain1[0] - 1, 
                 window_length = 3
                 ) 
+        
+    # Manually examined accessions that DPAM gives no anwser at all of
+    filter_result['W2HYN7'] = [(23, 176)]
+    filter_result['W2HZ06'] = [(23, 176)]
+    filter_result['W2FS78'] = [(23, 176)]
 
     return filter_result
 
@@ -614,12 +630,14 @@ def store(results : dict[str, int]):
     # Iterate over the methods' results
     for result in results.values():
         # Get the UniProt : His1 index pair of thos UniProt that pass the filter
-        yes_pass = {uniprot : his1 for uniprot, his1 in result.index() if his1 is not None}
+        yes_pass = {uniprot : his1 for uniprot, his1 in result.items() if his1 is not None}
+
         # Update the output dictionary
         uniprot_his1 = uniprot_his1 | yes_pass
 
     # Store structures
-    for structure, his1_index in uniprot_his1.index():
+    for uniprot, his1_index in tqdm(uniprot_his1.items()):
+        structure = AlphaFoldStructure(f'{config["AF_all"]}/{uniprot}.pdb')
         structure.rewrite_range(
             f"{config['AF_his1']}/{structure.id}.pdb", 
             (his1_index, len(structure))

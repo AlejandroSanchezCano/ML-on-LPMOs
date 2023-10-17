@@ -12,6 +12,7 @@ AlphaFoldStructure
 import os
 import re
 import numpy as np
+import pandas as pd
 
 #TODO: - Create an PDB class and a Structure class that is the father of the PDB and AF classes
 
@@ -305,7 +306,7 @@ class AlphaFoldStructure():
                     neighbours.append(self.seq[position - 1])
                     indexes.append(position - 1)
                     distances.append(distance)
-        import pandas as pd
+        
         return pd.DataFrame({'Index' : indexes, 'Distance' : distances}, index = neighbours)
     
     def rewrite_full(self, output_file: str, positions: list[int]) -> None:

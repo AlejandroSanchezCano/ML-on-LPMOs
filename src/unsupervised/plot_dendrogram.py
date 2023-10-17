@@ -15,12 +15,14 @@ to_binary
 make_binary
 '''
 
+
+import scipy
 import pickle
 import argparse
+import numpy as np
 import fastcluster
 import pandas as pd
 from .annotations import Annotation
-from scipy.cluster import hierarchy
 from ..config.config_parser import config
 
 def handle_arguments() -> argparse.Namespace:
@@ -52,12 +54,18 @@ def handle_arguments() -> argparse.Namespace:
         type = str,
         help = 'Output path where to store the generated files'
         )
+    
+    parser.add_argument(
+        '-c', '--cut_tree',
+        action = 'store_true',
+        help = 'Whether to cut the hierarchical tree.'
+        )
 
     # Arguments from Namespace object
     return parser.parse_args()
 
 def get_newick( 
-        node : hierarchy.ClusterNode, 
+        node : scipy.cluster.hierarchy.ClusterNode, 
         parent_dist : float, 
         leaf_names : list, 
         newick : None = ''
@@ -78,7 +86,7 @@ def get_newick(
         List of leaf names
     
     newick : None
-        LEave empty, this variable is used in recursion
+        Leave empty, this variable is used in recursion
 
     Returns
     -------
@@ -112,9 +120,9 @@ def get_newick(
         
         return newick
 
-def make_tree(args : argparse.Namespace):
+def make_linkage(args : argparse.Namespace) -> np.ndarray:
     '''
-    Converts a similarity matrix to a tree in Newick format.
+    Converts a similarity matrix to a scipy linkage matrix.
 
     Parameters
     ----------
@@ -123,7 +131,8 @@ def make_tree(args : argparse.Namespace):
     
     Returns
     -------
-    None.
+    Z : np.ndarray
+        Scipy linkage matrix
     '''
 
     # Unpickle similarity matrix
@@ -131,18 +140,78 @@ def make_tree(args : argparse.Namespace):
 
     # Average hierarchical clustering
     Z = fastcluster.linkage(similarity_matrix, 'average')
-    tree = hierarchy.to_tree(Z, False)
+
+    return Z
+
+def make_tree(args : argparse.Namespace, Z : np.ndarray):
+    '''
+    Converts a linkage matrix to a scipy linkage matrix.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments.
+
+    Z : np.ndarray
+        Scipy linkage matrix
+    
+    Returns
+    -------
+    None
+    '''
+
+    # Unpickle similarity matrix
+    similarity_matrix = pd.read_pickle(args.input_matrix)
+    
+    # Make tree
+    tree = scipy.cluster.hierarchy.to_tree(Z, False)
 
     # Convert tree to newick format
     newick = get_newick(
         node = tree, 
         parent_dist = tree.dist, 
-        leaf_names = similarity_matrix.columns
+        leaf_names = similarity_matrix.index.to_list()
         )
 
     # Store newick tree file
     with open(f'{args.output_dir}/tree.txt', 'w') as tree_file:
         tree_file.write(newick)
+
+def cut_tree(args : argparse.Namespace, Z : np.ndarray):
+    '''
+    Cut the hierarchical tree to retrieve clusters.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Arguments.
+
+    Z : np.ndarray
+        Scipy linkage matrix.
+    
+    Returns
+    -------
+    None.
+    '''
+
+    # Unpickle similarity matrix to get UniProt IDs
+    similarity_matrix = pd.read_pickle(args.input_matrix)
+    uniprots = similarity_matrix.columns
+
+    # Cut tree
+    cutree = scipy.cluster.hierarchy.cut_tree(Z)
+
+    # Initialize matrix with UniProt IDs per height (column) 
+    # and custer number (row)
+    matrix = [[[] for _ in range(len(cutree))] for _ in range(len(cutree))]
+
+    for height, agglomeration in enumerate(cutree.T):
+        for uniprot, cluster in zip(uniprots, agglomeration):
+            matrix[cluster][height].append(uniprot) 
+    
+    # Store matrix
+    pd.to_pickle(pd.DataFrame(matrix), f'{args.output_dir}/agglomeration.pkl')
+
 
 def make_colorstrip(args : argparse.Namespace):
     '''
@@ -173,7 +242,7 @@ def make_colorstrip(args : argparse.Namespace):
     colorstrip = Annotation().colorstrip(uniprot2colors)
 
     # Store colostrip annotation file
-    with open(f'{args.output_dir}/colorstip.txt', 'w') as annotation_file:
+    with open(f'{args.output_dir}/colorstrip.txt', 'w') as annotation_file:
         annotation_file.write(colorstrip)
 
 def to_binary(
@@ -270,7 +339,13 @@ def main():
     args = handle_arguments()
 
     # Make tree file
-    make_tree(args)
+    Z = make_linkage(args)
+    make_tree(args, Z)
+
+    # Cut tree
+    if args.cut_tree:
+        cut_tree(args, Z)
+    
 
     # Make annotation files
     make_colorstrip(args)
